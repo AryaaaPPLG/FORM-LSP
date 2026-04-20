@@ -6,7 +6,7 @@ use App\Models\LspForm;
 use Illuminate\Http\Request;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
-use PhpOffice\PhpWord\Shared\Html;
+// use PhpOffice\PhpWord\Shared\Html; // Bisa dihapus kalau tidak dipakai
 
 class AdminLspController extends Controller
 {
@@ -31,13 +31,21 @@ class AdminLspController extends Controller
         $section->addTextBreak(1);
 
         $section->addText('Tanda Tangan:', ['bold' => true]);
+
+        // --- PERBAIKAN FOLDER STORAGE ---
+        $storagePath = storage_path('app/public');
+        if (!file_exists($storagePath)) {
+            mkdir($storagePath, 0755, true);
+        }
         
         $tempFile = null;
         if (strpos($form->signature, ',') !== false) {
             try {
                 $data = explode(',', $form->signature);
                 $signatureData = base64_decode($data[1]);
-                $tempFile = tempnam(sys_get_temp_dir(), 'sig') . '.png';
+                
+                // Gunakan folder storage bawaan Laravel, BUKAN sys_get_temp_dir()
+                $tempFile = $storagePath . "/sig_" . uniqid() . ".png";
                 file_put_contents($tempFile, $signatureData);
 
                 $section->addImage($tempFile, ['width' => 120, 'height' => 60]);
@@ -48,10 +56,10 @@ class AdminLspController extends Controller
 
         $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
         $fileName = "Absensi_LSP_{$form->nama}.docx";
-        $filePath = storage_path("app/public/{$fileName}");
+        $filePath = $storagePath . "/{$fileName}";
         $objWriter->save($filePath);
 
-        // Delete temp file AFTER saving the document
+        // Delete temp file AFTER saving the document (Ini sudah mantap!)
         if ($tempFile && file_exists($tempFile)) {
             @unlink($tempFile);
         }
@@ -77,6 +85,12 @@ class AdminLspController extends Controller
         $table->addCell(3000)->addText('Asal Sekolah', ['bold' => true]);
         $table->addCell(2500)->addText('Tanda Tangan', ['bold' => true]);
 
+        // --- PERBAIKAN FOLDER STORAGE ---
+        $storagePath = storage_path('app/public');
+        if (!file_exists($storagePath)) {
+            mkdir($storagePath, 0755, true);
+        }
+
         $tempFiles = [];
 
         foreach ($forms as $index => $form) {
@@ -90,7 +104,9 @@ class AdminLspController extends Controller
                 try {
                     $data = explode(',', $form->signature);
                     $signatureData = base64_decode($data[1]);
-                    $tempFile = tempnam(sys_get_temp_dir(), 'sig') . '.png';
+                    
+                    // Gunakan folder storage bawaan Laravel
+                    $tempFile = $storagePath . "/rekap_sig_" . uniqid() . ".png";
                     file_put_contents($tempFile, $signatureData);
                     $tempFiles[] = $tempFile;
                     
@@ -105,10 +121,10 @@ class AdminLspController extends Controller
 
         $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
         $fileName = "Rekap_Absensi_LSP_" . date('Y-m-d') . ".docx";
-        $filePath = storage_path("app/public/{$fileName}");
+        $filePath = $storagePath . "/{$fileName}";
         $objWriter->save($filePath);
 
-        // Cleanup all temp files AFTER saving
+        // Cleanup all temp files AFTER saving (Ini juga sudah mantap!)
         foreach ($tempFiles as $file) {
             if (file_exists($file)) {
                 @unlink($file);
