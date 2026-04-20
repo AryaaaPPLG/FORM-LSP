@@ -192,7 +192,7 @@
         // --- Signature Pad Logic ---
         const sigCanvas = document.getElementById('signature-pad');
         const signaturePad = new SignaturePad(sigCanvas, {
-            penColor: 'rgb(255, 255, 255)'
+            penColor: 'rgb(0, 0, 0)'
         });
         const form = document.getElementById('lspForm');
         const signatureInput = document.getElementById('signature');

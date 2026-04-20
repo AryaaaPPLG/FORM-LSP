@@ -32,7 +32,7 @@ class AdminLspController extends Controller
 
         $section->addText('Tanda Tangan:', ['bold' => true]);
         
-        // Handle Base64 signature
+        $tempFile = null;
         if (strpos($form->signature, ',') !== false) {
             try {
                 $data = explode(',', $form->signature);
@@ -41,9 +41,6 @@ class AdminLspController extends Controller
                 file_put_contents($tempFile, $signatureData);
 
                 $section->addImage($tempFile, ['width' => 120, 'height' => 60]);
-                
-                // Cleanup
-                @unlink($tempFile);
             } catch (\Exception $e) {
                 $section->addText('[Gambar tanda tangan tidak dapat dimuat]');
             }
@@ -53,6 +50,11 @@ class AdminLspController extends Controller
         $fileName = "Absensi_LSP_{$form->nama}.docx";
         $filePath = storage_path("app/public/{$fileName}");
         $objWriter->save($filePath);
+
+        // Delete temp file AFTER saving the document
+        if ($tempFile && file_exists($tempFile)) {
+            @unlink($tempFile);
+        }
 
         return response()->download($filePath)->deleteFileAfterSend(true);
     }
@@ -69,12 +71,13 @@ class AdminLspController extends Controller
 
         $table = $section->addTable(['borderSize' => 6, 'borderColor' => '000000', 'cellMargin' => 80]);
         
-        // Header
         $table->addRow();
         $table->addCell(500)->addText('No', ['bold' => true]);
         $table->addCell(3000)->addText('Nama', ['bold' => true]);
         $table->addCell(3000)->addText('Asal Sekolah', ['bold' => true]);
         $table->addCell(2500)->addText('Tanda Tangan', ['bold' => true]);
+
+        $tempFiles = [];
 
         foreach ($forms as $index => $form) {
             $table->addRow();
@@ -89,15 +92,14 @@ class AdminLspController extends Controller
                     $signatureData = base64_decode($data[1]);
                     $tempFile = tempnam(sys_get_temp_dir(), 'sig') . '.png';
                     file_put_contents($tempFile, $signatureData);
+                    $tempFiles[] = $tempFile;
                     
                     $cell->addImage($tempFile, ['width' => 80, 'height' => 40]);
-                    
-                    @unlink($tempFile);
                 } catch (\Exception $e) {
-                    $cell->addText('Error signature');
+                    $cell->addText('Error');
                 }
             } else {
-                $cell->addText('Invalid data');
+                $cell->addText('N/A');
             }
         }
 
@@ -105,6 +107,13 @@ class AdminLspController extends Controller
         $fileName = "Rekap_Absensi_LSP_" . date('Y-m-d') . ".docx";
         $filePath = storage_path("app/public/{$fileName}");
         $objWriter->save($filePath);
+
+        // Cleanup all temp files AFTER saving
+        foreach ($tempFiles as $file) {
+            if (file_exists($file)) {
+                @unlink($file);
+            }
+        }
 
         return response()->download($filePath)->deleteFileAfterSend(true);
     }
