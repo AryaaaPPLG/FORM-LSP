@@ -35,7 +35,9 @@
                                 <td class="px-6 py-4 whitespace-nowrap">{{ $form->nama }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">{{ $form->asal_sekolah }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <img src="{{ $form->signature }}" class="h-10 border" alt="Signature">
+                                    <div class="bg-slate-800 rounded-lg p-1 inline-block">
+                                    <img src="{{ $form->signature }}" class="h-10" alt="Signature">
+                                </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap flex items-center space-x-3">
                                     <a href="{{ route('admin.lsp.export', $form->id) }}" class="text-blue-600 hover:text-blue-900 font-bold">Download</a>

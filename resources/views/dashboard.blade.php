@@ -1,4 +1,5 @@
 <x-app-layout>
+    <x-slot name="title">Dashboard Admin | Sistem Absensi LSP SMEMSA</x-slot>
     <style>
         .glass-dashboard {
             background: rgba(255, 255, 255, 0.8);
